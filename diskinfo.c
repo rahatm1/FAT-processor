@@ -4,9 +4,6 @@
 #include <inttypes.h>
 #include "Constants.h"
 
-#define BUFFER_SIZE 120
-#define SUPERBLOCK_INFO_SIZE 4
-
 int main(int argc, char const *argv[]) {
     if (argc < 2)
     {
@@ -24,7 +21,7 @@ int main(int argc, char const *argv[]) {
     int data;
     printf("Super block information:\n");
 
-    int block_size;
+    short block_size;
     fseek(fp, BLOCKSIZE_OFFSET, SEEK_SET);
     fread(&block_size, SUPERBLOCK_INFO_SIZE * 0.5, 1, fp);
     printf("Block size: %d\n", block_size = ntohs(block_size));

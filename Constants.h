@@ -23,7 +23,20 @@
 #define DIRECTORY_MODIFY_OFFSET		20
 #define DIRECTORY_FILENAME_OFFSET	27
 
+#define DIRECTORY_STATUS_SIZE 1
+#define DIRECTORY_FILE_SIZE_SIZE 4
+#define DIRECTORY_MODIFY_SIZE 7
+
 #define DIRECTORY_MAX_NAME_LENGTH	30
+
+typedef struct _date {
+    short year;
+    char month;
+    char date;
+    char hour;
+    char min;
+    char sec;
+} date;
 
 
 #define FAT_ENTRY_SIZE		4
@@ -42,5 +55,7 @@
 #define ROOTDIRSTART_OFFSET	22
 #define ROOTDIRBLOCKS_OFFSET	26
 
-#endif
+#define BUFFER_SIZE 120
+#define SUPERBLOCK_INFO_SIZE 4
 
+#endif

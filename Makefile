@@ -2,10 +2,13 @@ CFLAGS = -Wall -Wextra -pedantic -std=gnu11 -g
 LDFLAGS =
 CC = gcc
 
-all: diskinfo
+all: diskinfo disklist
 
 diskinfo: diskinfo.o
 	$(CC) $(CFLAGS) -o diskinfo diskinfo.o $(LDFLAGS)
 
+disklist: disklist.o
+	$(CC) $(CFLAGS) -o disklist disklist.o $(LDFLAGS)
+
 clean:
-	-rm -rf *.o diskinfo.dSYM diskinfo
+	-rm -rf *.o *.dSYM diskinfo disklist
