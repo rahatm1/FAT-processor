@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
+#include <netinet/in.h>
 #include "Constants.h"
 
 int main(int argc, char const *argv[]) {

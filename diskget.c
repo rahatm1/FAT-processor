@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <netinet/in.h>
 #include "Constants.h"
 
 void processFile(FILE *fp, int dir_entry, char *file_name)
@@ -30,6 +31,7 @@ void processFile(FILE *fp, int dir_entry, char *file_name)
         fread(&block, FAT_ENTRY_SIZE, 1, fp);
         block = ntohl(block);
     }
+    free(str);
 }
 
 int main(int argc, char const *argv[]) {
