@@ -20,11 +20,25 @@ void processFile(FILE *fp, int dir_entry, char *file_name)
     fread(&block, DIRECTORY_START_BLOCK_SIZE, 1, fp);
     block = ntohl(block);
 
+    int file_size;
+    fseek(fp, dir_entry + DIRECTORY_FILE_SIZE_OFFSET, SEEK_SET);
+    fread(&file_size, DIRECTORY_FILE_SIZE_SIZE, 1, fp);
+    file_size = ntohl(file_size);
+
     while (block != FAT_EOF) {
         //read data and write to out
         fseek(fp, block * DEFAULT_BLOCK_SIZE, SEEK_SET);
         fread(str, DEFAULT_BLOCK_SIZE, 1, fp);
-        fwrite(str, DEFAULT_BLOCK_SIZE, 1, out);
+
+        if (file_size < DEFAULT_BLOCK_SIZE)
+        {
+            fwrite(str, file_size, 1, out);
+        }
+        else
+        {
+            fwrite(str, DEFAULT_BLOCK_SIZE, 1, out);
+            file_size -= DEFAULT_BLOCK_SIZE;
+        }
 
         //read FAT entry
         fseek(fp, fat_start * DEFAULT_BLOCK_SIZE + block * FAT_ENTRY_SIZE, SEEK_SET);
