@@ -39,6 +39,16 @@ typedef struct _date {
     char sec;
 } date;
 
+typedef struct _directory_entry {
+    char status;
+    int start_block;
+    int num_block;
+    int file_size;
+    date create_time;
+    date modify_time;
+    char file_name[DIRECTORY_MAX_NAME_LENGTH+1];
+    char unused[6];
+} directory_entry;
 
 #define FAT_ENTRY_SIZE		4
 #define FAT_ENTRY_PER_BLOCK	(DEFAULT_BLOCK_SIZE/FAT_ENTRY_SIZE)
