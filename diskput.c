@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <netinet/in.h>
+#include <libgen.h>
 #include <time.h>
 #include "Constants.h"
 
@@ -13,7 +14,7 @@ void formatTime(date *dir_date)
     time (&t);
     timeinfo = localtime (&t);
 
-    dir_date->year = timeinfo->tm_year+1900;
+    dir_date->year = htons(timeinfo->tm_year+1900);
     dir_date->month = timeinfo->tm_mon+1;
     dir_date->date = timeinfo->tm_mday;
     dir_date->hour = timeinfo->tm_hour;
@@ -30,11 +31,6 @@ int main(int argc, char const *argv[]) {
 
     FILE *disk = fopen(argv[1], "r+");
     FILE *file = fopen(argv[2], "r");
-
-    //get file size
-    fseek(file, 0L, SEEK_END);
-    int file_size = ftell(file);
-    fseek(file, 0L, SEEK_SET);
 
     if (file == NULL || disk == NULL)
     {
@@ -60,27 +56,32 @@ int main(int argc, char const *argv[]) {
     root_blocks = ntohl(root_blocks);
 
     directory_entry dir;
+    memset(&dir, 0, sizeof(dir));
+
+    //get file size
+    fseek(file, 0L, SEEK_END);
+    int file_size = ftell(file);
+    fseek(file, 0L, SEEK_SET);
 
     dir.status = 0x3;
-    dir.start_block = 0;
-    dir.num_block = file_size/DEFAULT_BLOCK_SIZE + 1;
-    dir.file_size = file_size;
+    dir.start_block = htonl(0);
+    dir.num_block = htonl(file_size/DEFAULT_BLOCK_SIZE + 1);
+    dir.file_size = htonl(file_size);
 
     formatTime(&dir.create_time);
-    //TODO: should be samed
     formatTime(&dir.modify_time);
 
-    //TODO: strip file name from path
-    strncpy(dir.file_name, "test.txt", DIRECTORY_MAX_NAME_LENGTH);
-    strcpy(dir.unused, "\x00\xFF\xFF\xFF\xFF\xFF");
+    char path[BUFFER_SIZE];
+    strcpy(path, argv[2]);
+    strncpy(dir.file_name, basename(path), sizeof(dir.file_name));
 
     //while
     //find available block in FAT
     // save a block of data
     // ensure that disk has space for this file
-    int cur_block;
-    int last_block = -1;
-    int to_write = dir.num_block;
+    // int cur_block;
+    // int last_block = -1;
+    // int to_write = dir.num_block;
     // for (int i = 0; i < fat_blocks * FAT_ENTRY_PER_BLOCK; i++) {
     //     //read fat entry
     //     fseek(disk, fat_start * DEFAULT_BLOCK_SIZE + i * FAT_ENTRY_SIZE, SEEK_SET);
@@ -126,11 +127,22 @@ int main(int argc, char const *argv[]) {
         fread(&status, DIRECTORY_STATUS_SIZE, 1, disk);
         if (status == DIRECTORY_ENTRY_FREE)
         {
-            fseek(disk, entry + DIRECTORY_STATUS_OFFSET, SEEK_SET);
-            fwrite(&dir, DIRECTORY_ENTRY_SIZE, 1, disk);
+            fseek(disk, entry, SEEK_SET);
+            fwrite(&dir.status, 1, 1, disk);
+            fwrite(&dir.start_block, 4, 1, disk);
+            fwrite(&dir.num_block, 4, 1, disk);
+            fwrite(&dir.file_size, 4, 1, disk);
+
+            fwrite(&dir.create_time, 7, 1, disk);
+            fwrite(&dir.modify_time, 7, 1, disk);
+
+            fwrite(&dir.file_name, 31, 1, disk);
+            fwrite("\x00\xFF\xFF\xFF\xFF\xFF", 6, 1, disk);
             break;
         }
     }
 
+    fclose(disk);
+    fclose(file);
     return 0;
 }

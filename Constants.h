@@ -47,7 +47,6 @@ typedef struct _directory_entry {
     date create_time;
     date modify_time;
     char file_name[DIRECTORY_MAX_NAME_LENGTH+1];
-    char unused[6];
 } directory_entry;
 
 #define FAT_ENTRY_SIZE		4
