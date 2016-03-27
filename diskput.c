@@ -64,7 +64,7 @@ int main(int argc, char const *argv[]) {
     fseek(file, 0L, SEEK_SET);
 
     dir.status = 0x3;
-    dir.start_block = htonl(0);
+    dir.start_block = 0;
     dir.num_block = htonl(file_size/DEFAULT_BLOCK_SIZE + 1);
     dir.file_size = htonl(file_size);
 
@@ -79,42 +79,52 @@ int main(int argc, char const *argv[]) {
     //find available block in FAT
     // save a block of data
     // ensure that disk has space for this file
-    // int cur_block;
-    // int last_block = -1;
-    // int to_write = dir.num_block;
-    // for (int i = 0; i < fat_blocks * FAT_ENTRY_PER_BLOCK; i++) {
-    //     //read fat entry
-    //     fseek(disk, fat_start * DEFAULT_BLOCK_SIZE + i * FAT_ENTRY_SIZE, SEEK_SET);
-    //     fread(&cur_block, FAT_ENTRY_SIZE, 1, disk);
-    //     cur_block = ntohl(cur_block);
-    //
-    //     if (cur_block == FAT_FREE)
-    //     {
-    //         if (dir.start_block == -1)
-    //         {
-    //             dir.start_block = cur_block;
-    //         }
-    //         //TODO:write data at cur_block
-    //         to_write -= 1;
-    //         //write cur_block number at last_block FAT entry
-    //         if (last_block != -1)
-    //         {
-    //             fseek(disk, fat_start * DEFAULT_BLOCK_SIZE + last_block * FAT_ENTRY_SIZE, SEEK_SET);
-    //             //FIXME: change ENDIAN?
-    //             fwrite(&cur_block, FAT_ENTRY_SIZE, 1, disk);
-    //         }
-    //         last_block = i;
-    //     }
-    //
-    //     //FIXME: <= 0 ?
-    //     if (to_write <= 0) {
-    //         fseek(disk, fat_start * DEFAULT_BLOCK_SIZE + cur_block * FAT_ENTRY_SIZE, SEEK_SET);
-    //         int file_end = FAT_EOF;
-    //         fwrite(&file_end, FAT_ENTRY_SIZE, 1, disk);
-    //         break;
-    //     }
-    //
-    // }
+    int cur_block_data;
+    int last_block = -1;
+    int to_write = ntohl(dir.num_block);
+    char *str = (char *) malloc(DEFAULT_BLOCK_SIZE);
+    for (int block = 0; block < fat_blocks * FAT_ENTRY_PER_BLOCK; block++)
+    {
+        //read fat entry
+        fseek(disk, fat_start * DEFAULT_BLOCK_SIZE + block * FAT_ENTRY_SIZE, SEEK_SET);
+        fread(&cur_block_data, FAT_ENTRY_SIZE, 1, disk);
+        cur_block_data = ntohl(cur_block_data);
+
+        if (cur_block_data == FAT_FREE)
+        {
+            printf("BLOCK written at:%d\n", block);
+
+            if (dir.start_block == 0)
+            {
+                dir.start_block = htonl(block);
+            }
+            //TODO:write data at block
+            to_write -= 1;
+            fseek(file, 0L, SEEK_CUR);
+            fread(str, DEFAULT_BLOCK_SIZE, 1, file);
+
+            fseek(disk, block * DEFAULT_BLOCK_SIZE, SEEK_SET);
+            fwrite(str, DEFAULT_BLOCK_SIZE, 1, disk);
+
+            //write block number at last_block FAT entry
+            if (last_block != -1)
+            {
+                fseek(disk, fat_start * DEFAULT_BLOCK_SIZE + last_block * FAT_ENTRY_SIZE, SEEK_SET);
+                int block_big_endian = htonl(block);
+                fwrite(&block_big_endian, FAT_ENTRY_SIZE, 1, disk);
+            }
+            last_block = block;
+
+            if (to_write <= 0)
+            {
+                fseek(disk, fat_start * DEFAULT_BLOCK_SIZE + block * FAT_ENTRY_SIZE, SEEK_SET);
+                int file_end = FAT_EOF;
+                fwrite(&file_end, FAT_ENTRY_SIZE, 1, disk);
+                break;
+            }
+        }
+
+    }
 
 
     //find an empty spot and write directory entry to root dir
