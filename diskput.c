@@ -92,13 +92,11 @@ int main(int argc, char const *argv[]) {
 
         if (cur_block_data == FAT_FREE)
         {
-            printf("BLOCK written at:%d\n", block);
-
             if (dir.start_block == 0)
             {
                 dir.start_block = htonl(block);
             }
-            //TODO:write data at block
+
             to_write -= 1;
             fseek(file, 0L, SEEK_CUR);
             fread(str, DEFAULT_BLOCK_SIZE, 1, file);
